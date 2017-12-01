@@ -1,0 +1,12 @@
+@startuml
+' Test state machine for Unit testing YATFsm
+[*] --> S1
+S1 --> S2 : msg(2)/\nHello_S1-2
+S1 --> S3 : msg(3)/\nHello_S1-3
+S2 --> S1 : msg(2)/\nHello_S2-1
+S3 --> S1 : msg(3)/\nHello_S3-1
+S1 --> [*] : msg(1)/\nGoodbye
+S1 : Enter: enter S1
+S2 : Enter: enter S2
+S3 : Exit: exit S3
+@enduml

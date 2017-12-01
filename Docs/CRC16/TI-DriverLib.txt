@@ -1,0 +1,45 @@
+[1] MSB 1st operation
+/// NOTE:
+/// In MSB 1st operation, set8BitDataXXX() has "Reversed" and
+/// getResultXXX() does not have "Reversed".
+
+CRC32_setSeed(seed, CRC16_MODE);
+for (i=0; i<length; i++)
+{
+	CRC32_set8BitDataReversed(data[i], CRC16_MODE);
+}
+
+union {
+	uint8_t crc[2];
+	uint16_t word;
+} crcStore;
+
+crcStore.word = CRC32_getResult(CRC16_MODE);
+CRC32_set8BitDataReversed(crcStore.crc[1], CRC16_MODE);
+CRC32_set8BitDataReversed(crcStore.crc[0], CRC16_MODE);
+
+if (0 == CRC32_getResult(CRC16_MODE)) // no error
+
+[2] LSB 1st operation
+/// NOTE:
+/// In LSB 1st operation, set8BitDataXXX() does not have "Reversed"
+/// and getResultXXX() has "Reversed".
+/// Very confusing!
+
+CRC32_setSeed(seed, CRC16_MODE);
+for (i=0; i<length; i++)
+{
+	CRC32_set8BitData(data[i], CRC16_MODE);
+}
+
+union {
+	uint8_t crc[2];
+	uint16_t word;
+} crcStore;
+
+crcStore.word = CRC32_getResultReversed(CRC16_MODE);
+CRC32_set8BitData(crcStore.crc[0], CRC16_MODE);
+CRC32_set8BitData(crcStore.crc[1], CRC16_MODE);
+
+if (0 == CRC32_getResultReversed(CRC16_MODE)) // no error
+
