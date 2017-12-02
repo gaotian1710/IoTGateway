@@ -19,3 +19,4 @@
 #include <Logging.h>
 #include <Fsm.h>
 #include <CRC16.h>
+#include <TextRW.h>

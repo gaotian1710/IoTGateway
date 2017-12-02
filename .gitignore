@@ -6,6 +6,8 @@
 *.user
 *.userosscache
 *.sln.docstates
+TestData/TextRW/textu16-1.txt
+TestData/TextRW/texta1.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

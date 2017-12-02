@@ -101,9 +101,9 @@ uint32_t YTATextRW_WriteBytes(PCYTAByteBuffer buffer, const wchar_t * filePath)
 				{
 					err = ERROR_SUCCESS;
 				}
-				ptrToWrite += writtenBytes;
-				remainingBytes -= writtenBytes;
 			}
+			ptrToWrite += writtenBytes;
+			remainingBytes -= writtenBytes;
 		} while (remainingBytes);
 	} while (0);
 	if (hFile != NULL && hFile != INVALID_HANDLE_VALUE)
@@ -117,34 +117,29 @@ uint32_t YTATextRW_ReadWText(PYTAWTextBuffer buffer, const wchar_t * filePath)
 {
 	uint32_t err = ERROR_SUCCESS;
 	YTAByteBuffer byteBuffer = { 0 };
-	HANDLE hFile = NULL;
 	do {
 		if (ERROR_SUCCESS != (err = YTATextRW_ReadBytes(&byteBuffer, filePath)))
 		{
 			break;
 		}
-		uint32_t estimateCharCount = byteBuffer.bcFilled - 2;
+		uint32_t estimateCharCount = (byteBuffer.bcFilled - 2)/sizeof(WCHAR);
 		wchar_t bom = 0xfeff;
 		if (bom != *(wchar_t*)(byteBuffer.buffer)) { // valid BOM not found
 			err = ERROR_BAD_FORMAT;
 			break;
 		}
-		if ((buffer->ccLength - 1) < estimateCharCount)
+		if ((buffer->ccLength) < (estimateCharCount + 1))
 		{
-			YTAWTextBuffer_Destroy(buffer);
 			if (ERROR_SUCCESS != (err = YTAWTextBuffer_Init(buffer, estimateCharCount + 1)))
 			{
 				break;
 			}
 		}
-		wchar_t* src = (wchar_t*)(byteBuffer.buffer) + 1;
+		const wchar_t* src = (wchar_t*)(byteBuffer.buffer) + 1;
 		wcsncpy_s(buffer->buffer, buffer->ccLength, src, estimateCharCount);
+		buffer->ccFilled = estimateCharCount;
 	} while (0);
 	YTAByteBuffer_Destroy(&byteBuffer);
-	if (hFile != NULL && hFile != INVALID_HANDLE_VALUE)
-	{
-		CloseHandle(hFile);
-	}
 	return err;
 }
 
@@ -152,33 +147,27 @@ uint32_t YTATextRW_WriteWText(PCYTAWTextBuffer buffer, const wchar_t * filePath)
 {
 	uint32_t err = ERROR_SUCCESS;
 	YTAByteBuffer byteBuffer = { 0 };
-	HANDLE hFile = NULL;
 	do {
 		uint32_t byteBufferSize = (buffer->ccFilled + 1) * sizeof(wchar_t);
 		YTAByteBuffer_Init(&byteBuffer, byteBufferSize);
 		wchar_t bom = 0xfeff;
-		wchar_t* srcPtr = buffer->buffer + 1;
-		uint32_t copySize = buffer->ccFilled - 1;
-		if (buffer->buffer[0] != bom)
+		if (buffer->buffer[0] == bom)
+		{
+			size_t copyLength = buffer->ccFilled * sizeof(wchar_t);
+			memcpy_s((void*)byteBuffer.buffer, (size_t)byteBuffer.bcLength, (const void*)(buffer->buffer), copyLength);
+			byteBuffer.bcFilled = (uint32_t)copyLength;
+		}
+		else
 		{
 			*(wchar_t*)(byteBuffer.buffer) = bom;
-			byteBuffer.bcFilled = sizeof(bom);
-			srcPtr--;
-			copySize++;
-		}
-		if (EINVAL == wcsncpy_s((wchar_t*)(byteBuffer.buffer + byteBuffer.bcFilled),
-			(byteBuffer.bcLength - byteBuffer.bcFilled) / sizeof(wchar_t),
-			srcPtr, copySize))
-		{
-			err = ERROR_INVALID_OPERATION;
-			break;
+			byteBuffer.bcFilled = sizeof(wchar_t);
+			size_t copyLength = sizeof(wchar_t) * (buffer->ccFilled);
+			memcpy_s((void*)(byteBuffer.buffer + byteBuffer.bcFilled), byteBuffer.bcLength - byteBuffer.bcFilled,
+				(const void*)(buffer->buffer), copyLength);
+			byteBuffer.bcFilled += (uint32_t)copyLength;
 		}
 		err = YTATextRW_WriteBytes(&byteBuffer, filePath);
 	} while (0);
 	YTAByteBuffer_Destroy(&byteBuffer);
-	if (hFile != NULL && hFile != INVALID_HANDLE_VALUE)
-	{
-		CloseHandle(hFile);
-	}
 	return err;
 }

@@ -24,7 +24,11 @@ uint32_t YTAWTextBuffer_Init(PYTAWTextBuffer p, uint32_t length)
 uint32_t YTAWTextBuffer_Destroy(PYTAWTextBuffer p)
 {
 	uint32_t err = ERROR_SUCCESS;
+	if (p == nullptr) return err;
+	if (p->buffer == nullptr) return err;
 	free((void*)(p->buffer));
+	p->ccFilled = p->ccLength = 0;
+	p->buffer = nullptr;
 	return err;
 }
 
@@ -74,7 +78,11 @@ uint32_t YTAByteBuffer_Destroy(PYTAByteBuffer p)
 {
 	uint32_t err = ERROR_SUCCESS;
 	do {
+		if (p == nullptr) break;
+		if (p->buffer == nullptr) break;
 		free(p->buffer);
+		p->buffer = nullptr;
+		p->bcFilled = p->bcLength = 0;
 	} while (0);
 	return err;
 }
