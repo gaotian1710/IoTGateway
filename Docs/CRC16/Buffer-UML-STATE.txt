@@ -1,0 +1,29 @@
+@startuml
+/' state transitions
+ WPA: Waiting for Primary Address
+ WSA: Waiting for Secondary Address
+ WACRC: Waiting for Address block CRC
+ CACRC: Calculating Address block CRC
+ WPL: Waiting for Payload Length
+ WDB: Waiting for Data Byte
+ WDCRC: Waiting for Data block CRC
+ CDCRC: Calculating Data block CRC
+ ERCOV: Error recovery
+ '/
+[*] -right-> WPA
+WPA -right-> WSA : recv byte/\nsave PA,\npush to CRC unit
+WSA -right-> WCRC : recv byte/\nsave SA,\npush to CRC unit
+WCRC --> CACRC : recv word/save CRC,\npush to CRC unit
+CACRC -left-> WPL: end calc\n[no error, my address]/\nselect buffer
+CACRC --> ERCOV: end calc\n[CRC error]
+WPL -left-> WDB: recv byte/\save PL,\npush to CRC unit
+WDB --> WDB: recv byte [PL--]/\npush to buffer,\npush to CRC unit
+WDB --> WDCRC: recv byte [PL-- == 0]/\npush to buffer,\npush to CRC unit
+WDCRC --> CDCRC: recv word/\npush to CRC unit
+CDCRC --> WPA: end calc\n[no error]/Action!
+CDCRC --> ERCOV: end calc\n[CRC error]
+ERCOV --> WPA: timeout
+state WPA: Enter: clear CRC unit
+state WPL: Enter: clear CRC unit
+state ERCOV: Exit: Tx sync packet
+@enduml
